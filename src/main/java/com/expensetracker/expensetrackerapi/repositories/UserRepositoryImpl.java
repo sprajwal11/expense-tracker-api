@@ -2,6 +2,7 @@ package com.expensetracker.expensetrackerapi.repositories;
 
 import com.expensetracker.expensetrackerapi.domain.User;
 import com.expensetracker.expensetrackerapi.exception.EtAuthException;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -26,14 +27,16 @@ public class UserRepositoryImpl implements UserRepository{
 
     @Override
     public Integer create(String firstName, String lastName, String email, String password) throws EtAuthException {
-        try{
-            KeyHolder keyHolder=new GeneratedKeyHolder();
-            jdbcTemplate.update(connection->{
-                PreparedStatement ps=connection.prepareStatement(SQL_CREATE, Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1,firstName);
-                ps.setString(2,lastName);
-                ps.setString(3,email);
-                ps.setString(4,password);
+        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(10));
+        try {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(SQL_CREATE, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, firstName);
+                ps.setString(2, lastName);
+                ps.setString(3, email);
+                ps.setString(4, hashedPassword);
+                //System.out.println(hashedPassword);
                 return ps;
             },keyHolder);
             return (Integer)keyHolder.getKeys().get("USER_ID");
@@ -49,7 +52,7 @@ public class UserRepositoryImpl implements UserRepository{
     public User findByEmailAndPassword(String email, String password) throws EtAuthException {
         try{
             User user=jdbcTemplate.queryForObject(SQL_FIND_BY_EMAIL,new Object[]{email},userRowMapper);
-            if (!password.equals(user.getPassword()))
+            if (!BCrypt.checkpw(password,user.getPassword()))
                 throw new EtAuthException("Invalid email/password");
             return user;
         }
