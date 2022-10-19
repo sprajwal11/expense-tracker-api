@@ -16,6 +16,6 @@ public interface TransactionService {
 
     void updateTransaction(Integer userId, Integer categoryId, Integer TransactionId, Transaction transaction) throws EtBadRequestException;
 
-    void RemoveTransaction(Integer userId, Integer categoryId, Integer TransactionId, Transaction transaction) throws EtBadRequestException;
+    void removeTransaction(Integer userId, Integer categoryId, Integer transactionId) throws EtBadRequestException;
 
 }
